@@ -10,10 +10,11 @@ import (
 )
 
 type EnvEntry struct {
-	Key      string
-	Default  string
-	Required bool
-	Masked   bool
+	Key        string
+	Default    string
+	Required   bool
+	Masked     bool
+	GroupBreak bool
 }
 
 func Extract(dir, typeName string) ([]EnvEntry, error) {
@@ -45,14 +46,14 @@ func Extract(dir, typeName string) ([]EnvEntry, error) {
 		}
 
 		var entries []EnvEntry
-		extractFromStruct(st, "", &entries)
+		extractFromStruct(st, "", &entries, true)
 		return entries, nil
 	}
 
 	return nil, fmt.Errorf("type %s not found in package at %s", typeName, dir)
 }
 
-func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry) {
+func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry, _ bool) {
 	for i := range st.NumFields() {
 		field := st.Field(i)
 		tag := reflect.StructTag(st.Tag(i))
@@ -67,7 +68,12 @@ func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry) {
 		}
 
 		if nested, ok := ft.Underlying().(*types.Struct); ok && envTag == "" {
-			extractFromStruct(nested, prefix+envPrefix, entries)
+			groupBreak := len(*entries) > 0
+			sub := collectEntries(nested, prefix+envPrefix)
+			if len(sub) > 0 {
+				sub[0].GroupBreak = groupBreak
+			}
+			*entries = append(*entries, sub...)
 			continue
 		}
 
@@ -87,4 +93,10 @@ func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry) {
 			Masked:   masked,
 		})
 	}
+}
+
+func collectEntries(st *types.Struct, prefix string) []EnvEntry {
+	var entries []EnvEntry
+	extractFromStruct(st, prefix, &entries, false)
+	return entries
 }
