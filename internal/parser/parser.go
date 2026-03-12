@@ -19,7 +19,7 @@ type EnvEntry struct {
 
 func Extract(dir, typeName string) ([]EnvEntry, error) {
 	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
+		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax | packages.NeedDeps | packages.NeedImports,
 		Dir:  dir,
 	}
 
