@@ -86,13 +86,23 @@ func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry, _ b
 		required := len(parts) > 1 && strings.Contains(parts[1], "required")
 		masked := tag.Get("print") == "mask"
 
+		def := envDefault
+		if def == "" && isBool(field.Type()) {
+			def = "false"
+		}
+
 		*entries = append(*entries, EnvEntry{
 			Key:      key,
-			Default:  envDefault,
+			Default:  def,
 			Required: required,
 			Masked:   masked,
 		})
 	}
+}
+
+func isBool(t types.Type) bool {
+	b, ok := t.Underlying().(*types.Basic)
+	return ok && b.Kind() == types.Bool
 }
 
 func collectEntries(st *types.Struct, prefix string) []EnvEntry {
