@@ -61,13 +61,11 @@ func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry) {
 		envPrefix := tag.Get("envPrefix")
 		envDefault := tag.Get("envDefault")
 
-		// Resolve underlying type (deref pointer if needed)
 		ft := field.Type()
 		if ptr, ok := ft.(*types.Pointer); ok {
 			ft = ptr.Elem()
 		}
 
-		// Nested struct (no env tag on the field itself)
 		if nested, ok := ft.Underlying().(*types.Struct); ok && envTag == "" {
 			extractFromStruct(nested, prefix+envPrefix, entries)
 			continue
@@ -79,7 +77,6 @@ func extractFromStruct(st *types.Struct, prefix string, entries *[]EnvEntry) {
 
 		parts := strings.SplitN(envTag, ",", 2)
 		key := prefix + parts[0]
-
 		required := len(parts) > 1 && strings.Contains(parts[1], "required")
 		masked := tag.Get("print") == "mask"
 
